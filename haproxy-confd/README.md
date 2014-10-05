@@ -22,3 +22,6 @@ If the host_port entry is given a port value then
 localhost:port
 
 will also forward to the correct backend
+
+
+See test.sh for usage example
