@@ -5,4 +5,3 @@ keys	= [
     "services",
 ]
 reload_cmd 	= "haproxy -f /etc/haproxy/haproxy.cfg -p /var/run/haproxy.pid -d -D -sf $(cat /var/run/haproxy.pid)"
-check_cmd       = true
