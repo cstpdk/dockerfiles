@@ -12,7 +12,9 @@ Entries have the form:
 - /services/entryname/hosts/[1,2,3,4] <- Value is endpoints of IP:Port
 
 NOTE: For https, the ssl is terminated when hitting haproxy, and
-continues forward as a plain http request
+continues forward as a plain http request. SSL .pem files should be
+mounted in /keys folder. Haproxy will use this folder as crt. This
+means that there must only be .pem files in the folder
 
 Entries are then available by requesting the service with either
 url path matching entryname or host header matching entryname, that is
