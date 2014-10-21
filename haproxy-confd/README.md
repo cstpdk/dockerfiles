@@ -4,11 +4,15 @@ Confd setup to look for etcd entries in /services, and
 update a haproxy instance accordingly.
 
 Entries have the form:
-/services/entryname
-/services/entryname/scheme <- Possible values http,tcp
-/services/entryname/host_port <- Optional, listen on this port for
-incoming requests to this entry
-/services/entryname/hosts/[1,2,3,4] <- Value is endpoints of IP:Port
+
+- /services/entryname
+- /services/entryname/scheme <- Possible values http,https,tcp
+- /services/entryname/host_port <- Optional, listen on this port for
+- incoming requests to this entry
+- /services/entryname/hosts/[1,2,3,4] <- Value is endpoints of IP:Port
+
+NOTE: For https, the ssl is terminated when hitting haproxy, and
+continues forward as a plain http request
 
 Entries are then available by requesting the service with either
 url path matching entryname or host header matching entryname, that is

@@ -1,4 +1,4 @@
-docker build -t discoverer .
+#docker build -t discoverer .
 docker rm -f etcd || true &>/dev/null
 docker rm -f discoverer || true &>/dev/null
 
@@ -28,17 +28,29 @@ $curl -XPOST "http://$etcd:4001/v2/keys/services/srv2/hosts" -d value="curlmyip.
 
 $curl -XPUT "http://$etcd:4001/v2/keys/services/srv3" -d dir=true
 $curl -XPUT "http://$etcd:4001/v2/keys/services/srv3/hosts" -d dir=true
-$curl -XPUT "http://$etcd:4001/v2/keys/services/srv3/scheme" -d value=http
+$curl -XPUT "http://$etcd:4001/v2/keys/services/srv3/scheme" -d value=tcp
 
 $curl -XPOST "http://$etcd:4001/v2/keys/services/srv3/hosts" -d value="curlmyip.com:80"
 
+$curl -XPUT "http://$etcd:4001/v2/keys/services/srv4" -d dir=true
+$curl -XPUT "http://$etcd:4001/v2/keys/services/srv4/hosts" -d dir=true
+$curl -XPUT "http://$etcd:4001/v2/keys/services/srv4/scheme" -d value=tcp
+
+$curl -XPUT "http://$etcd:4001/v2/keys/services/secure_server" -d dir=true
+$curl -XPUT "http://$etcd:4001/v2/keys/services/secure_server/hosts" -d dir=true
+$curl -XPUT "http://$etcd:4001/v2/keys/services/secure_server/scheme" -d value=https
+
+$curl -XPOST "http://$etcd:4001/v2/keys/services/secure_server/hosts" -d value="curlmyip.com:80"
+
+
 docker run --link etcd:etcd -d \
-	-p 3000:3000 -p 80:80 \
+	-p 3000:3000 -p 80:80 -p 443:443 \
 	--name discoverer \
         --entrypoint bash \
         -v `pwd`/haproxy.cfg:/etc/confd/templates/haproxy.cfg \
+	-v `pwd`/keys:/keys \
 	discoverer \
-	-c '/start -verbose -node=$ETCD_PORT_4001_TCP_ADDR:$ETCD_PORT_4001_TCP_PORT'
+	-c '/start -interval 2 -verbose -debug -node=$ETCD_PORT_4001_TCP_ADDR:$ETCD_PORT_4001_TCP_PORT'
 
 sleep 3 # yeah
 
@@ -58,8 +70,11 @@ check(){
 
 expected=$(curl -s "curlmyip.com:80")
 
-actual=$(curl -s localhost:3000)
+actual=$(curl -s localhost)
 check "$actual" "$expected"
 
 actual=$(curl -s localhost/srv1)
+check "$actual" "$expected"
+
+actual=$(curl -s "https://localhost")
 check "$actual" "$expected"
