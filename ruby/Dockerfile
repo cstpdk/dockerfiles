@@ -6,6 +6,7 @@ RUN apt-get update && \
     build-essential \
     curl \
     git-core \
+    libpq-dev && \
     libcurl4-openssl-dev \
     libreadline-dev \
     libssl-dev \
