@@ -32,16 +32,6 @@ $curl -XPUT "http://$etcd:4001/v2/keys/services/srv3/scheme" -d value=tcp
 
 $curl -XPOST "http://$etcd:4001/v2/keys/services/srv3/hosts" -d value="curlmyip.com:80"
 
-$curl -XPUT "http://$etcd:4001/v2/keys/services/srv4" -d dir=true
-$curl -XPUT "http://$etcd:4001/v2/keys/services/srv4/hosts" -d dir=true
-$curl -XPUT "http://$etcd:4001/v2/keys/services/srv4/scheme" -d value=tcp
-
-$curl -XPUT "http://$etcd:4001/v2/keys/services/secure_server" -d dir=true
-$curl -XPUT "http://$etcd:4001/v2/keys/services/secure_server/hosts" -d dir=true
-$curl -XPUT "http://$etcd:4001/v2/keys/services/secure_server/scheme" -d value=https
-
-$curl -XPOST "http://$etcd:4001/v2/keys/services/secure_server/hosts" -d value="curlmyip.com:80"
-
 
 docker run --link etcd:etcd -d \
 	-p 3000:3000 -p 80:80 -p 443:443 \
@@ -74,7 +64,4 @@ actual=$(curl -s localhost)
 check "$actual" "$expected"
 
 actual=$(curl -s localhost/srv1)
-check "$actual" "$expected"
-
-actual=$(curl -s "https://localhost")
 check "$actual" "$expected"
