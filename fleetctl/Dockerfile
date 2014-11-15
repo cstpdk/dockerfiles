@@ -5,3 +5,5 @@ ADD https://github.com/coreos/fleet/releases/download/v0.8.3/fleet-v0.8.3-linux-
 RUN tar -xvf fleet.tar.gz
 
 RUN cp fleet-v0.8.3-linux-amd64/fleet* /usr/bin
+
+RUN apt-get update && apt-get -y install ssh
