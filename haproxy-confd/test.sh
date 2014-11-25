@@ -1,46 +1,41 @@
+#!/bin/bash
+
+set -e
+
 #docker build -t discoverer .
 docker rm -f etcd || true &>/dev/null
 docker rm -f discoverer || true &>/dev/null
 
-docker run -d -p 4001:4001 -p 7001:7001 --name etcd \
-	coreos/etcd \
-	-discovery `curl -s https://discovery.etcd.io/new` -addr etcd:4001
+docker run -d -p 4001:4001 --name etcd quay.io/coreos/etcd:v0.4.6
 
 sleep 3 # Yeah
 
-curl="docker run --link etcd:etcd speg03/curl -s -L -w '\n'"
-etcd="etcd"
+etcdctl() {
+	docker run --net=host --entrypoint /etcdctl quay.io/coreos/etcd:v0.5.0_alpha.0 "$@"
+}
 
-$curl -XPUT "http://$etcd:4001/v2/keys/services" -d dir=true
-$curl -XPUT "http://$etcd:4001/v2/keys/services/srv1" -d dir=true
-$curl -XPUT "http://$etcd:4001/v2/keys/services/srv1/hosts" -d dir=true
-$curl -XPUT "http://$etcd:4001/v2/keys/services/srv1/scheme" -d value=http
+# Happy path
+etcdctl set services/srv1/scheme http
+etcdctl set services/srv1/host_port 3000
+etcdctl set services/srv1/hosts/1 curlmyip.com:80
 
-$curl -XPUT "http://$etcd:4001/v2/keys/services/srv1/host_port" -d value=3000
-$curl -XPOST "http://$etcd:4001/v2/keys/services/srv1/hosts" -d value="curlmyip.com:80"
+# Missing hosts
+etcdctl set services/srv2/scheme http
 
-$curl -XPUT "http://$etcd:4001/v2/keys/services/srv2" -d dir=true
-$curl -XPUT "http://$etcd:4001/v2/keys/services/srv2/hosts" -d dir=true
-$curl -XPUT "http://$etcd:4001/v2/keys/services/srv2/scheme" -d value=http
+# Missing hosts and scheme!!!
+etcdctl mkdir services/srv3
 
-$curl -XPUT "http://$etcd:4001/v2/keys/services/srv2/host_port" -d value=3001
-$curl -XPOST "http://$etcd:4001/v2/keys/services/srv2/hosts" -d value="curlmyip.com:80"
+# Missing scheme
+etcdctl set services/srv4/hosts/1 curlmyip.com:80
 
-$curl -XPUT "http://$etcd:4001/v2/keys/services/srv3" -d dir=true
-$curl -XPUT "http://$etcd:4001/v2/keys/services/srv3/hosts" -d dir=true
-$curl -XPUT "http://$etcd:4001/v2/keys/services/srv3/scheme" -d value=tcp
-
-$curl -XPOST "http://$etcd:4001/v2/keys/services/srv3/hosts" -d value="curlmyip.com:80"
-
-
-docker run --link etcd:etcd -d \
+docker run -d \
 	-p 3000:3000 -p 80:80 -p 443:443 \
-	--name discoverer \
-        --entrypoint bash \
-        -v `pwd`/haproxy.cfg:/etc/confd/templates/haproxy.cfg \
+	--net=host --name discoverer \
+	-v `pwd`/haproxy.cfg:/etc/confd/templates/haproxy.cfg \
 	-v `pwd`/keys:/keys \
-	discoverer \
-	-c '/start -interval 2 -verbose -debug -node=$ETCD_PORT_4001_TCP_ADDR:$ETCD_PORT_4001_TCP_PORT'
+	--entrypoint bash \
+	haproxy-confd \
+	-c 'confd -interval 1 -verbose -debug'
 
 sleep 3 # yeah
 
@@ -59,9 +54,13 @@ check(){
 }
 
 expected=$(curl -s "curlmyip.com:80")
+error_503="$(curl -s 'localhost/bogusogusogus')"
 
-actual=$(curl -s localhost)
+actual=$(curl -s localhost:3000)
 check "$actual" "$expected"
 
 actual=$(curl -s localhost/srv1)
 check "$actual" "$expected"
+
+actual=$(curl -s localhost/srv2)
+check "$actual" "$error_503"

@@ -6,6 +6,4 @@ RUN chmod u+x /usr/local/bin/confd
 ADD configuration.toml /etc/confd/conf.d/configuration.toml
 ADD haproxy.cfg /etc/confd/templates/haproxy.cfg
 
-ADD start /start
-
-ENTRYPOINT ["/start"]
+ENTRYPOINT ["confd"]
