@@ -1,0 +1,3 @@
+docker run -it	-v `pwd`/hekad.toml:/etc/hekad/hekad.toml \
+		-v /var/run/docker.sock:/var/run/docker.sock \
+		heka

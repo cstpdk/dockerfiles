@@ -1,0 +1,17 @@
+[DockerLogInput]
+
+[PayloadEncoder]
+append_newlines = false
+
+[LogOutput]
+message_matcher = "TRUE"
+encoder = "PayloadEncoder"
+
+[ESJsonEncoder]
+es_index_from_timestamp = true
+
+[ElasticSearchOutput]
+server = "http://172.17.42.1:9200"
+message_matcher = "TRUE"
+encoder = "ESJsonEncoder"
+flush_interval = 5
