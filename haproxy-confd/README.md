@@ -13,7 +13,8 @@ Entries have the form:
 - /services/entryname/hosts/[1,2,3,4]
 	- Value is endpoints of IP:Port
 
-If any of /services/\*/scheme has value "https", then ssl is assumed.
+If the value of /services/config/ssl_support is "true" then ssl is
+activated.
 This works in the following way:
 
 The ssl is terminated when hitting haproxy, and
