@@ -29,9 +29,8 @@ docker run -d \
 	--net=host --name discoverer \
 	-v `pwd`/haproxy.cfg:/etc/confd/templates/haproxy.cfg \
 	-v `pwd`/keys:/keys \
-	--entrypoint bash \
 	haproxy-confd \
-	-c 'confd -interval 1 -verbose -debug'
+	-interval 1 -verbose -debug
 
 sleep 3 # yeah
 
