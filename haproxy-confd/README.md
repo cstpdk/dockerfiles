@@ -13,7 +13,7 @@ Entries have the form:
 - /services/entryname/hosts/[1,2,3,4]
 	- Value is endpoints of IP:Port
 
-If the value of /services/config/ssl_support is "true" then ssl is
+If the value of /config/services/ssl_support is "true" then ssl is
 activated.
 This works in the following way:
 

@@ -30,9 +30,13 @@ docker run -d \
 	-v `pwd`/haproxy.cfg:/etc/confd/templates/haproxy.cfg \
 	-v `pwd`/keys:/keys \
 	haproxy-confd \
-	-interval 1 -verbose -debug
+	-interval 5
 
 sleep 3 # yeah
+
+# Setup
+etcdctl mkdir /services
+etcdctl mkdir /config
 
 # Happy path
 etcdctl set services/srv1/scheme http
@@ -64,19 +68,19 @@ actual=$(curl -s localhost/srv2)
 check "$actual" "$error_503"
 
 # SSL
-etcdctl set /services/config/ssl_support true
+etcdctl set /config/services/ssl_support true
 
-etcdctl set services/srv3/scheme https
-etcdctl set services/srv3/hosts/3 curlmyip.com:80
+etcdctl set /services/srv5/scheme https
+etcdctl set /services/srv5/hosts/1 curlmyip.com:80
 
 sleep 3
 
 # Happy path
-actual=$(curl --resolve 'srv3.local:443:127.0.0.1' --insecure -s https://srv3.local)
+actual=$(curl --resolve 'srv5.local:443:127.0.0.1' --insecure -s https://srv5.local)
 check "$actual" "$expected"
 
 # Redirect non-https to https ... Btw curl is magic <3
-actual=$(curl --resolve 'srv3.local:80:127.0.0.1' --insecure \
-        -L -s -w "%{http_code} %{url_effective}\\n" http://srv3.local)
+actual=$(curl --resolve 'srv5.local:80:127.0.0.1' \
+	-s -L -w "%{http_code} %{url_effective}\\n" http://srv5.local)
 
-check "$actual" "301 https://srv3.local/"
+check "$actual" "301 https://srv5.local/"
