@@ -18,7 +18,7 @@ RUN wget https://download.elasticsearch.org/kibana/kibana/kibana-${KIBANA_VERSIO
 	mv /kibana-${KIBANA_VERSION} /kibana
 
 # HTTP
-EXPOSE 9200 9300 9292
+EXPOSE 9200 9292
 
 ADD elasticsearch.yml /elasticsearch/config/elasticsearch.yml
 
