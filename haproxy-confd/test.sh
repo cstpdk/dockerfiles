@@ -96,7 +96,3 @@ sleep 2
 todo="curl -s localhost/srv6"
 actual=$($todo)
 check "$actual" "$error_503" "$todo"
-
-check "$(curl -s -H 'Host: srv6.john' 172.17.42.1)" "$expected"
-
-check "$(docker run -it speg03/curl -s -H 'Host: srv6.john' 172.17.42.1)" "$expected" # Docker adds the . I'm not pleased with it
