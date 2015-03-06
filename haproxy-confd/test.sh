@@ -90,9 +90,13 @@ check "$(curl --resolve 'srv5.local:80:127.0.0.1' -s -L -w "%{http_code} %{url_e
 etcdctl set /services/srv6/scheme http
 etcdctl set /services/srv6/private true
 etcdctl set /services/srv6/hosts/1 curlmyip.com:80
+etcdctl set /services/srv6/host_port 1338
+
 
 sleep 2
 
 todo="curl -s localhost/srv6"
 actual=$($todo)
 check "$actual" "$error_503" "$todo"
+
+check "$(curl -s localhost:1338)" "$expected"
