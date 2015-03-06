@@ -1,6 +1,6 @@
 FROM dockerfile/haproxy
 
-ENV VERSION 0.6.3
+ENV VERSION 0.7.1
 
 ADD https://github.com/kelseyhightower/confd/releases/download/v${VERSION}/confd-${VERSION}-linux-amd64 \
 	/usr/local/bin/confd

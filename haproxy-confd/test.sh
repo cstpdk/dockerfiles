@@ -15,6 +15,7 @@ etcdctl() {
 }
 
 check(){
+	echo "Checking ""$3"
 	if [[ "$1" != "$2" ]] ; then
 		echo -e "Wrong test output\n"
 		echo -e "Was:\n$1"
@@ -30,9 +31,9 @@ docker run -d \
 	-v `pwd`/haproxy.cfg:/etc/confd/templates/haproxy.cfg \
 	-v `pwd`/keys:/keys \
 	haproxy-confd \
-	-interval 5
+	-interval 1
 
-sleep 3 # yeah
+sleep 2 # yeah
 
 # Setup
 etcdctl mkdir /services
@@ -52,20 +53,24 @@ etcdctl mkdir services/srv3
 # Missing scheme
 etcdctl set services/srv4/hosts/1 curlmyip.com:80
 
+sleep 2
+
 expected=$(curl -s "curlmyip.com:80")
 error_503="$(curl -s 'localhost/bogusogusogus')"
 
-actual=$(curl -s localhost:3000)
-check "$actual" "$expected"
+todo="curl -s localhost:3000"
+actual=$($todo)
+check "$actual" "$expected" "$todo"
 
-actual=$(curl -s localhost/srv1)
-check "$actual" "$expected"
+todo="curl -s localhost/srv1"
+actual=$($todo)
+check "$actual" "$expected" "$todo"
 
-actual=$(curl -s --resolve 'srv1.local:80:127.0.0.1' http://srv1.local)
-check "$actual" "$expected"
+check "$(curl -s --resolve 'srv1.local:80:127.0.0.1' http://srv1.local)" "$expected"
 
-actual=$(curl -s localhost/srv2)
-check "$actual" "$error_503"
+todo="curl -s localhost/srv2"
+actual=$($todo)
+check "$actual" "$error_503" "$todo"
 
 # SSL
 etcdctl set /config/services/ssl_support true
@@ -73,14 +78,25 @@ etcdctl set /config/services/ssl_support true
 etcdctl set /services/srv5/scheme https
 etcdctl set /services/srv5/hosts/1 curlmyip.com:80
 
-sleep 3
+sleep 2
 
 # Happy path
-actual=$(curl --resolve 'srv5.local:443:127.0.0.1' --insecure -s https://srv5.local)
-check "$actual" "$expected"
+check "$(curl --resolve 'srv5.local:443:127.0.0.1' --insecure -s https://srv5.local)" "$expected"
 
 # Redirect non-https to https ... Btw curl is magic <3
-actual=$(curl --resolve 'srv5.local:80:127.0.0.1' \
-	-s -L -w "%{http_code} %{url_effective}\\n" http://srv5.local)
+check "$(curl --resolve 'srv5.local:80:127.0.0.1' -s -L -w "%{http_code} %{url_effective}\\n" http://srv5.local)" "301 https://srv5.local/"
 
-check "$actual" "301 https://srv5.local/"
+# Private service
+etcdctl set /services/srv6/scheme http
+etcdctl set /services/srv6/private true
+etcdctl set /services/srv6/hosts/1 curlmyip.com:80
+
+sleep 2
+
+todo="curl -s localhost/srv6"
+actual=$($todo)
+check "$actual" "$error_503" "$todo"
+
+check "$(curl -s -H 'Host: srv6.john' 172.17.42.1)" "$expected"
+
+check "$(docker run -it speg03/curl -s -H 'Host: srv6.john' 172.17.42.1)" "$expected" # Docker adds the . I'm not pleased with it
