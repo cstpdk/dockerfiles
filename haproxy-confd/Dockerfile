@@ -1,4 +1,4 @@
-FROM dockerfile/haproxy
+FROM haproxy
 
 ENV VERSION 0.7.1
 
